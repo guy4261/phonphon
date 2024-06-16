@@ -54,8 +54,24 @@
 		const output_div = document.getElementById("output");
 
 		function expand(digits12){
+			/*
+			+972 5x-xyz-xyzw
+			"05x-xyz-xyzw"
+			"05x-xyzxyzw"
+			"05xxyzxyzw"
+			*/
+			rv = [];
 			var leading_zero = "0" + digits12.slice(3)
-			return [leading_zero];
+			rv.push(leading_zero)
+			
+			var prefix = leading_zero.slice(0, 3)  // 052
+			var suffix = leading_zero.slice(3)     // 1234567
+			rv.push(`${prefix}-${suffix}`);
+
+			var suffix1 = suffix.slice(0, 3)
+			var suffix2 = suffix.slice(3)
+			rv.push(`${prefix}-${suffix1}-${suffix2}`)
+			return rv
 		}
 
 		function search(){
@@ -65,19 +81,31 @@
 				var digits12 = extractDigits(value);
 				var numbers = [ value ];				
 				numbers = numbers.concat(expand(digits12))
-				var q = numbers.map(n => encodeURIComponent(n)).join("+");
-				var url = `${google_search_prefix}${q}`
+				var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
+				var url = `${google_search_prefix}${encodeURIComponent(q)}`
 				var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
 				for (const n of numbers){
-					var url = `${google_search_prefix}${encodeURIComponent(n)}`
+					var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
 					innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
 				}
-
+				innerHTML += `${numbers.join(" ")}<br/><br/>\n\n`;
+				innerHTML += numbers.join("<br/>\n");
 				output.innerHTML = innerHTML;
 			} else {
 				output.innerHTML = `Bad format! Example: ${example_phone_number}`
 			}
 		}
+
+		function demo(){
+			document.getElementById("text").value = example_phone_number;
+			search();
+		}
+
+		function clean(){
+			document.getElementById("text").value = "";
+			return;
+		}
+
 	</script>
 </head>
 <body>
@@ -86,9 +114,11 @@
 		<br/>
 		Example: <code>+972 50-987-6543</code>
 		<br/>
-		<textarea id="text">+972 50-987-6543</textarea>
+		<textarea id="text"></textarea>
 		<br/>
-		<button id="button" onclick="search()">Make me a Google Search Link</button>
+		<button id="button" onclick="search()">Make me a Google Search Link</button><br/>
+		<button id="demoButton"  onclick="demo()">Demo</button> 
+		<button id="clearButton" onclick="clean()">Clean</button>
 		<br/>
 		<div id="output"></div>
 		<br/>
