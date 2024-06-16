@@ -88,12 +88,19 @@
 					var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
 					innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
 				}
-				innerHTML += `${numbers.join(" ")}<br/><br/>\n\n`;
+				innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
 				innerHTML += numbers.join("<br/>\n");
 				output.innerHTML = innerHTML;
 			} else {
 				output.innerHTML = `Bad format! Example: ${example_phone_number}`
 			}
+		}
+
+		async function search_from_clipboard(){
+			var cb = await navigator.clipboard.readText()
+			document.getElementById("text").value = cb;
+			search();
+
 		}
 
 		function demo(){
@@ -116,7 +123,8 @@
 		<br/>
 		<textarea id="text"></textarea>
 		<br/>
-		<button id="button" onclick="search()">Make me a Google Search Link</button><br/>
+		<button id="searchButtom" onclick="search()">Make me a Google Search Link</button><br/>
+		<button id="clipboardSearchButton" onclick="search_from_clipboard()">Paste &amp; Search</button><br/>
 		<button id="demoButton"  onclick="demo()">Demo</button> 
 		<button id="clearButton" onclick="clean()">Clean</button>
 		<br/>
