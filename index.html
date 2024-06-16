@@ -1,21 +1,82 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>phonphon</title>
-		<script type="text/javascript">
-			const google_search_prefix = "https://www.google.com/search?q=";
-			const output_div = document.getElementById("output");
-			function search(){
-				var value = document.getElementById("text").value;
-				var url = `${google_search_prefix}${value}`
-				output.innerHTML = `<a href="${url}">Search!</a><br/><a href="${url}">${url}</a>`
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>phonphon</title>
+	<script type="text/javascript">
+		const url_encoded_plus = "%2B";
+		function extractDigits(input) {
+		// Regular expression to match digits (0-9)
+			var regex = /\d/g;
+		// Use match method to extract digits from input string
+			var digitsArray = input.match(regex);
+		// Join the array into a string of digits
+			var digitsString = digitsArray.join('');
+			return digitsString;
+		}
+		const example_phone_number = "+972 50-987-6543";
+		const expected_nr_digits = extractDigits(example_phone_number).length;
+		function isValidIsraeliPhoneNumber(input){
+
+			if (input[0] !== '+'){
+				console.log("Not starting with a +")
+				return false;
 			}
-		</script>
-	</head>
-	<body>
-		<center>
+
+			var digits = extractDigits(input);
+			if (!digits.startsWith("9725")){
+				console.log("digits don't start with 9725")
+				return false;
+			}
+			if (digits.length !== expected_nr_digits){
+				console.log(`No ${expected_nr_digits} in this number`)
+				return false;
+			}
+			return true;
+		}
+		// Test cases
+		var cases = ["+972 50-987-6543",
+			"+972501234567",
+			"+972-3-123-4567",
+			"+972 8 123 45 67",
+			"+972 4 1234567",
+			"+972 12 123 4567",
+			"+972 50-987-654",
+			"+972 501234567",
+			"+972-9-1234567",
+			"+972-7-123-4567"]
+
+		for (const num of cases){
+			console.log(`${num} ${isValidIsraeliPhoneNumber(num)}\n`);
+		}
+		const google_search_prefix = "https://www.google.com/search?q=";
+		const output_div = document.getElementById("output");
+
+		function expand(digits12){
+			var leading_zero = "0" + digits12.slice(3)
+			return [leading_zero];
+		}
+
+		function search(){
+			var value = document.getElementById("text").value.trim();
+			
+			if (isValidIsraeliPhoneNumber(value)){
+				var digits12 = extractDigits(value);
+				var numbers = [ url_encoded_plus + digits12 ];
+				
+				numbers = numbers.concat(expand(digits12))
+				var q = numbers.join("+")
+				var url = `${google_search_prefix}${q}`
+				output.innerHTML = `<a href="${url}">Search!</a><br/><a href="${url}">${url}</a>`
+			} else {
+				output.innerHTML = `Bad format! Example: ${example_phone_number}`
+			}
+		}
+	</script>
+</head>
+<body>
+	<center>
 		<span onclick = "window.location.href='https://guy4261.github.io/phonphon/';">❤️</span>
 		<br/>
 		Example: <code>+972 50-987-6543</code>
@@ -26,6 +87,6 @@
 		<br/>
 		<div id="output"></div>
 		<br/>
-		</center>
-	</body>
+	</center>
+</body>
 </html>
