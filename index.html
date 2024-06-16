@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>phonphon</title>
 	<script type="text/javascript">
-		const url_encoded_plus = "%2B";
+		// const url_encoded_plus = "%2B";
 		function extractDigits(input) {
 		// Regular expression to match digits (0-9)
 			var regex = /\d/g;
@@ -63,12 +63,17 @@
 			
 			if (isValidIsraeliPhoneNumber(value)){
 				var digits12 = extractDigits(value);
-				var numbers = [ url_encoded_plus + digits12 ];
-				
+				var numbers = [ value ];				
 				numbers = numbers.concat(expand(digits12))
-				var q = numbers.join("+")
+				var q = numbers.map(n => encodeURIComponent(n)).join("+");
 				var url = `${google_search_prefix}${q}`
-				output.innerHTML = `<a href="${url}">Search!</a><br/><a href="${url}">${url}</a>`
+				var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
+				for (const n of numbers){
+					var url = `${google_search_prefix}${encodeURIComponent(n)}`
+					innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
+				}
+
+				output.innerHTML = innerHTML;
 			} else {
 				output.innerHTML = `Bad format! Example: ${example_phone_number}`
 			}
