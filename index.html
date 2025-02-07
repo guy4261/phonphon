@@ -5,84 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>phonphon</title>
     <script type="text/javascript">
-
+// beautified using https://beautifier.io/
 var ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 const RE_ALPHABET = /[a-z]/g
 const RE_CHARS = /[\(\)\+]/g
 
 // const url_encoded_plus = "%2B";
 function extract_digits(input) {
-  var regex = /\d/g;
-  var digitsArray = input.match(regex);
-  var digitsString = digitsArray.join('');
-  return digitsString;
+    var regex = /\d/g;
+    var digitsArray = input.match(regex);
+    var digitsString = digitsArray.join('');
+    return digitsString;
 }
 
-var reverse = function (string) {
-  // https://stackoverflow.com/a/16776621
-  return string.split('').reverse().join('');
+var reverse = function(string) {
+    // https://stackoverflow.com/a/16776621
+    return string.split('').reverse().join('');
 };
 
 function prefix(words) {
-  // https://stackoverflow.com/a/68703218
-  // check border cases size 1 array and empty first word)
-  if (!words[0] || words.length == 1) return words[0] || '';
-  let i = 0;
-  // while all words have the same character at position i, increment i
-  while (words[0][i] && words.every(w => w[i] === words[0][i])) i++;
+    // https://stackoverflow.com/a/68703218
+    // check border cases size 1 array and empty first word)
+    if (!words[0] || words.length == 1) return words[0] || '';
+    let i = 0;
+    // while all words have the same character at position i, increment i
+    while (words[0][i] && words.every(w => w[i] === words[0][i])) i++;
 
-  // prefix is the substring from the beginning to the last successfully checked i
-  return words[0].slice(0, i);
+    // prefix is the substring from the beginning to the last successfully checked i
+    return words[0].slice(0, i);
 }
 
-function to_pattern(number, prefix){
-        if (prefix === ""){
-          return number;
-        } else if (!number[0].match(/[\d]/)){
-            return number[0] + to_pattern(number.substring(1), prefix);
-        } else if (number[0] === prefix[0]){
-          return (ALPHABET[prefix.length - 1] +
-              to_pattern(number.substring(1), prefix.substring(1))
-            )
-        } else {
-            return ""; // the equivalent of raise an exception...
-        }
+function to_pattern(number, prefix) {
+    if (prefix === "") {
+        return number;
+    } else if (!number[0].match(/[\d]/)) {
+        return number[0] + to_pattern(number.substring(1), prefix);
+    } else if (number[0] === prefix[0]) {
+        return (ALPHABET[prefix.length - 1] +
+            to_pattern(number.substring(1), prefix.substring(1))
+        )
+    } else {
+        return ""; // the equivalent of raise an exception...
     }
+}
 
 
 class PhonePattern {
-  constructor(name, flag, patterns, example_phone_number) {
-    this.name = name;
-    this.flag = flag;
-    this.patterns = patterns;
-    this.example_phone_number = example_phone_number;
+    constructor(name, flag, patterns, example_phone_number) {
+        this.name = name;
+        this.flag = flag;
+        this.patterns = patterns;
+        this.example_phone_number = example_phone_number;
 
-    this.suffix = prefix(patterns.map(extract_digits).map(reverse));
-    this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, this.suffix)).map(reverse);
-    // this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
-    this.regexes = this.patterns.map(p => (p
-        .replace("+", "\\+")
-        .replace("(", "\\(")
-        .replace(")", "\\)")
-        .replace(RE_ALPHABET, "(\\d)")
-    ));
-  }
+        this.suffix = prefix(patterns.map(extract_digits).map(reverse));
+        this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, this.suffix)).map(reverse);
+        // this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
+        this.regexes = this.patterns.map(p => (p
+            .replace("+", "\\+")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace(RE_ALPHABET, "(\\d)")
+        ));
+    }
 
-    search(target){
+    search(target) {
         var patterns = this.patterns;
         var regexes = this.regexes;
         var rvs = [];
-        for (let i = 0; i < patterns.length; i++){
+        for (let i = 0; i < patterns.length; i++) {
             var r = regexes[i];
             var m = target.match(r);
-            if (m !== null){
+            if (m !== null) {
                 m.shift();
-                for(let k = 0; k < patterns.length; k++){
+                for (let k = 0; k < patterns.length; k++) {
                     var rv = patterns[k];
-                    for (let j = 0; j < m.length; j++){
+                    for (let j = 0; j < m.length; j++) {
                         rv = rv.replace(ALPHABET[j], m[j]);
                     }
-                rvs.push(rv);
+                    rvs.push(rv);
                 }
             }
         }
@@ -93,10 +93,10 @@ class PhonePattern {
 
 var flag_il = '🇮🇱';
 var patterns_il = [
-  '+972 52-538-1648',
-  '0525381648',
-  '052-5381648',
-  '052-538-1648',
+    '+972 52-538-1648',
+    '0525381648',
+    '052-5381648',
+    '052-538-1648',
 ];
 // +972 5x-xyz-xyzw
 // "05x-xyz-xyzw"
@@ -136,58 +136,60 @@ var cases = ["+972 50-987-6543",
     "+972 50-987-654",
     "+972 501234567",
     "+972-9-1234567",
-    "+972-7-123-4567"]
+    "+972-7-123-4567"
+]
 
-    const google_search_prefix = "https://www.google.com/search?q=";
+const google_search_prefix = "https://www.google.com/search?q=";
 
-        function search(){
-            fetch("https://t.ly/8ZfIB").catch((e) => {return;});
+function search() {
+    fetch("https://t.ly/8ZfIB").catch((e) => {
+        return;
+    });
 
-            var value = document.getElementById("text").value.trim();
-            var numbers = [value];
-            for(pat of supported){
-                numbers = numbers.concat(pat.search(value));
-            }
-            if (numbers.length > 0){
-                var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
-                var url = `${google_search_prefix}${encodeURIComponent(q)}`
-                var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
-                for (const n of numbers){
-                    var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
-                    innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
-                }
-                innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
-                innerHTML += numbers.join("<br/>\n");
-                output.innerHTML = innerHTML;
-            } else {
-                output.innerHTML = `Bad format! Example: ${pat.example_phone_number}`
-            }
+    var value = document.getElementById("text").value.trim();
+    var numbers = [value];
+    for (pat of supported) {
+        numbers = numbers.concat(pat.search(value));
+    }
+    if (numbers.length > 0) {
+        var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
+        var url = `${google_search_prefix}${encodeURIComponent(q)}`
+        var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
+        for (const n of numbers) {
+            var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
+            innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
         }
+        innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
+        innerHTML += numbers.join("<br/>\n");
+        output.innerHTML = innerHTML;
+    } else {
+        output.innerHTML = `Bad format! Example: ${pat.example_phone_number}`
+    }
+}
 
-        async function search_from_clipboard(){
-            var cb = await navigator.clipboard.readText()
-            document.getElementById("text").value = cb;
-            search();
+async function search_from_clipboard() {
+    var cb = await navigator.clipboard.readText()
+    document.getElementById("text").value = cb;
+    search();
 
-        }
+}
 
-        function demo(example_phone_number){
-            document.getElementById("text").value = example_phone_number;
-            search();
-        }
+function demo(example_phone_number) {
+    document.getElementById("text").value = example_phone_number;
+    search();
+}
 
-        function clean(){
-            document.getElementById("text").value = "";
-        }
+function clean() {
+    document.getElementById("text").value = "";
+}
 
-function add_demo_buttons(){
+function add_demo_buttons() {
     var ds = document.getElementById("demo_buttons");
-    for(pat of supported){
+    for (pat of supported) {
         console.log(pat);
         ds.innerHTML += `<span id="${pat.name}" onclick="demo('${pat.example_phone_number}')">${pat.flag}</span>`;
     }
 }
-
 </script>
 </head>
 <body onload="add_demo_buttons()">
