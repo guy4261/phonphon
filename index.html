@@ -1,135 +1,215 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>phonphon</title>
-	<script type="text/javascript">
-		// const url_encoded_plus = "%2B";
-		function extractDigits(input) {
-		// Regular expression to match digits (0-9)
-			var regex = /\d/g;
-		// Use match method to extract digits from input string
-			var digitsArray = input.match(regex);
-		// Join the array into a string of digits
-			var digitsString = digitsArray.join('');
-			return digitsString;
-		}
-		const example_phone_number = "+972 50-987-6543";
-		const expected_nr_digits = extractDigits(example_phone_number).length;
-		function isValidIsraeliPhoneNumber(input){
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>phonphon</title>
+    <script type="text/javascript">
 
-			if (input[0] !== '+'){
-				console.log("Not starting with a +")
-				return false;
-			}
+var ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+const RE_ALPHABET = /[a-z]/g
+const RE_CHARS = /[\(\)\+]/g
 
-			var digits = extractDigits(input);
-			if (!digits.startsWith("9725")){
-				console.log("digits don't start with 9725")
-				return false;
-			}
-			if (digits.length !== expected_nr_digits){
-				console.log(`No ${expected_nr_digits} in this number`)
-				return false;
-			}
-			return true;
-		}
-		// Test cases
-		var cases = ["+972 50-987-6543",
-			"+972501234567",
-			"+972-3-123-4567",
-			"+972 8 123 45 67",
-			"+972 4 1234567",
-			"+972 12 123 4567",
-			"+972 50-987-654",
-			"+972 501234567",
-			"+972-9-1234567",
-			"+972-7-123-4567"]
+// const url_encoded_plus = "%2B";
+function extract_digits(input) {
+  var regex = /\d/g;
+  var digitsArray = input.match(regex);
+  var digitsString = digitsArray.join('');
+  return digitsString;
+}
 
-		for (const num of cases){
-			console.log(`${num} ${isValidIsraeliPhoneNumber(num)}\n`);
-		}
-		const google_search_prefix = "https://www.google.com/search?q=";
-		const output_div = document.getElementById("output");
+var reverse = function (string) {
+  // https://stackoverflow.com/a/16776621
+  return string.split('').reverse().join('');
+};
 
-		function expand(digits12){
-			/*
-			+972 5x-xyz-xyzw
-			"05x-xyz-xyzw"
-			"05x-xyzxyzw"
-			"05xxyzxyzw"
-			*/
-			rv = [];
-			var leading_zero = "0" + digits12.slice(3)
-			rv.push(leading_zero)
-			
-			var prefix = leading_zero.slice(0, 3)  // 052
-			var suffix = leading_zero.slice(3)     // 1234567
-			rv.push(`${prefix}-${suffix}`);
+function prefix(words) {
+  // https://stackoverflow.com/a/68703218
+  // check border cases size 1 array and empty first word)
+  if (!words[0] || words.length == 1) return words[0] || '';
+  let i = 0;
+  // while all words have the same character at position i, increment i
+  while (words[0][i] && words.every(w => w[i] === words[0][i])) i++;
 
-			var suffix1 = suffix.slice(0, 3)
-			var suffix2 = suffix.slice(3)
-			rv.push(`${prefix}-${suffix1}-${suffix2}`)
-			return rv
-		}
+  // prefix is the substring from the beginning to the last successfully checked i
+  return words[0].slice(0, i);
+}
 
-		function search(){
-			var value = document.getElementById("text").value.trim();
-			
-			if (isValidIsraeliPhoneNumber(value)){
-				var digits12 = extractDigits(value);
-				var numbers = [ value ];				
-				numbers = numbers.concat(expand(digits12))
-				var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
-				var url = `${google_search_prefix}${encodeURIComponent(q)}`
-				var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
-				for (const n of numbers){
-					var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
-					innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
-				}
-				innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
-				innerHTML += numbers.join("<br/>\n");
-				output.innerHTML = innerHTML;
-			} else {
-				output.innerHTML = `Bad format! Example: ${example_phone_number}`
-			}
-		}
+function to_pattern(number, prefix){
+        if (prefix === ""){
+          return number;
+        } else if (!number[0].match(/[\d]/)){
+            return number[0] + to_pattern(number.substring(1), prefix);
+        } else if (number[0] === prefix[0]){
+          return (ALPHABET[prefix.length - 1] +
+              to_pattern(number.substring(1), prefix.substring(1))
+            )
+        } else {
+            return ""; // the equivalent of raise an exception...
+        }
+    }
 
-		async function search_from_clipboard(){
-			var cb = await navigator.clipboard.readText()
-			document.getElementById("text").value = cb;
-			search();
 
-		}
+class PhonePattern {
+  constructor(name, flag, patterns, example_phone_number) {
+    this.name = name;
+    this.flag = flag;
+    this.patterns = patterns;
+    this.example_phone_number = example_phone_number;
 
-		function demo(){
-			document.getElementById("text").value = example_phone_number;
-			search();
-		}
+    this.suffix = prefix(patterns.map(extract_digits).map(reverse));
+    this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, this.suffix)).map(reverse);
+    // this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
+    this.regexes = this.patterns.map(p => (p
+        .replace("+", "\\+")
+        .replace("(", "\\(")
+        .replace(")", "\\)")
+        .replace(RE_ALPHABET, "(\\d)")
+    ));
+  }
 
-		function clean(){
-			document.getElementById("text").value = "";
-			return;
-		}
+    search(target){
+        var patterns = this.patterns;
+        var regexes = this.regexes;
+        var rvs = [];
+        for (let i = 0; i < patterns.length; i++){
+            var r = regexes[i];
+            var m = target.match(r);
+            if (m !== null){
+                m.shift();
+                for(let k = 0; k < patterns.length; k++){
+                    var rv = patterns[k];
+                    for (let j = 0; j < m.length; j++){
+                        rv = rv.replace(ALPHABET[j], m[j]);
+                    }
+                rvs.push(rv);
+                }
+            }
+        }
+        return rvs
+    }
+}
 
-	</script>
+
+var flag_il = '🇮🇱';
+var patterns_il = [
+  '+972 52-538-1648',
+  '0525381648',
+  '052-5381648',
+  '052-538-1648',
+];
+// +972 5x-xyz-xyzw
+// "05x-xyz-xyzw"
+// "05x-xyzxyzw"
+// "05xxyzxyzw"
+
+var example_phone_number_il = "+972 52-538-1648";
+const israel = new PhonePattern(
+    'Israel',
+    flag_il,
+    patterns_il,
+    example_phone_number_il,
+);
+
+flag_us = '🇺🇸';
+var patterns_us = [
+    '+1-212-456-7890',
+    '+1 202 456 7890',
+];
+example_phone_number_us = '+1-800-273-8255';
+const usa = new PhonePattern(
+    'USA',
+    flag_us,
+    patterns_us,
+    example_phone_number_us,
+)
+
+var supported = [israel, usa];
+
+// Test cases
+var cases = ["+972 50-987-6543",
+    "+972501234567",
+    "+972-3-123-4567",
+    "+972 8 123 45 67",
+    "+972 4 1234567",
+    "+972 12 123 4567",
+    "+972 50-987-654",
+    "+972 501234567",
+    "+972-9-1234567",
+    "+972-7-123-4567"]
+
+    const google_search_prefix = "https://www.google.com/search?q=";
+
+        function search(){
+            fetch("https://t.ly/8ZfIB").catch((e) => {return;});
+
+            var value = document.getElementById("text").value.trim();
+            var numbers = [value];
+            for(pat of supported){
+                numbers = numbers.concat(pat.search(value));
+            }
+            if (numbers.length > 0){
+                var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
+                var url = `${google_search_prefix}${encodeURIComponent(q)}`
+                var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
+                for (const n of numbers){
+                    var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
+                    innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
+                }
+                innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
+                innerHTML += numbers.join("<br/>\n");
+                output.innerHTML = innerHTML;
+            } else {
+                output.innerHTML = `Bad format! Example: ${pat.example_phone_number}`
+            }
+        }
+
+        async function search_from_clipboard(){
+            var cb = await navigator.clipboard.readText()
+            document.getElementById("text").value = cb;
+            search();
+
+        }
+
+        function demo(example_phone_number){
+            document.getElementById("text").value = example_phone_number;
+            search();
+        }
+
+        function clean(){
+            document.getElementById("text").value = "";
+        }
+
+function add_demo_buttons(){
+    var ds = document.getElementById("demo_buttons");
+    for(pat of supported){
+        console.log(pat);
+        ds.innerHTML += `<span id="${pat.name}" onclick="demo('${pat.example_phone_number}')">${pat.flag}</span>`;
+    }
+}
+
+</script>
 </head>
-<body>
-	<center>
-		<span onclick = "window.location.href='https://guy4261.github.io/phonphon/';">❤️</span>
-		<br/>
-		Example: <code>+972 50-987-6543</code>
-		<br/>
-		<textarea id="text"></textarea>
-		<br/>
-		<button id="searchButtom" onclick="search()">Make me a Google Search Link</button><br/>
-		<button id="clipboardSearchButton" onclick="search_from_clipboard()">Paste &amp; Search</button><br/>
-		<button id="demoButton"  onclick="demo()">Demo</button> 
-		<button id="clearButton" onclick="clean()">Clean</button>
-		<br/>
-		<div id="output"></div>
-		<br/>
-	</center>
+<body onload="add_demo_buttons()">
+    <center>
+        
+        <span onclick = "window.location.href='https://guy4261.github.io/phonphon/';">❤️</span>
+        <span onclick = "window.location.href='https://guy4261.github.io/phonphon/original.html';">💩</span>
+        <br/>
+
+        <textarea id="text"></textarea><br/>
+        
+        <button id="searchButtom" onclick="search()">Make me a Google Search Link</button><br/>
+        
+        <button id="clipboardSearchButton" onclick="search_from_clipboard()">Paste &amp; Search</button><br/>
+        
+        <span id="demo_buttons"></span><br/>
+        
+        <button id="clearButton" onclick="clean()">Clean</button><br/>
+        
+        <div id="output"></div><br/>
+        
+        <span id="console_log"></span><br/>
+    </center>
 </body>
 </html>
