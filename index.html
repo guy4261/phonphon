@@ -127,7 +127,7 @@ const usa = new PhonePattern(
 var supported = [israel, usa];
 
 // Test cases
-var cases = ["+972 50-987-6543",
+var cases_il = ["+972 50-987-6543",
     "+972501234567",
     "+972-3-123-4567",
     "+972 8 123 45 67",
@@ -187,7 +187,7 @@ function add_demo_buttons() {
     var ds = document.getElementById("demo_buttons");
     for (pat of supported) {
         console.log(pat);
-        ds.innerHTML += `<span id="${pat.name}" onclick="demo('${pat.example_phone_number}')">${pat.flag}</span>`;
+        ds.innerHTML += `<span id="${pat.name}" onclick="demo('${pat.example_phone_number}')">${pat.flag} </span>`;
     }
 }
 </script>
