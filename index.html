@@ -57,18 +57,23 @@ class PhonePattern {
         this.patterns = patterns;
         this.example_phone_number = example_phone_number;
 
-        this.suffix = prefix(patterns.map(extract_digits).map(reverse));
-        this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, this.suffix)).map(reverse);
+        this.suffix = reverse(prefix(patterns.map(extract_digits).map(reverse)));
+        this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, reverse(this.suffix))).map(reverse);
         this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
+
         for(let pre of this.prefixes){
-            this.patterns.push(pre + this.suffix);
-        }
+            var addition = reverse(to_pattern(reverse(pre + this.suffix), reverse(this.suffix)));
+            this.patterns.push(addition);
+        }   
         this.patterns = [...new Set(this.patterns)];
-        this.regexes = this.patterns.map(p => (p
+        this.regexes = this.patterns.map(p => (
+            "^" +
+            p
             .replace("+", "\\+")
             .replace("(", "\\(")
             .replace(")", "\\)")
             .replace(RE_ALPHABET, "(\\d)")
+            + "$"
         ));
     }
 
@@ -78,7 +83,7 @@ class PhonePattern {
         var rvs = [];
         for (let i = 0; i < patterns.length; i++) {
             var r = regexes[i];
-            var m = target.match(r);
+            var m = target.match(r)
             if (m !== null) {
                 m.shift();
                 for (let k = 0; k < patterns.length; k++) {
@@ -151,24 +156,39 @@ function search() {
     fetch("https://t.ly/8ZfIB").catch((e) => {return;});
 
     var value = document.getElementById("text").value.trim();
+    if (value.length == 0){
+        return;
+    }
     var numbers = [value];
     for (pat of supported) {
         numbers = numbers.concat(pat.search(value));
     }
     numbers = [...new Set(numbers)];
-    if (numbers.length > 0) {
-        var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
-        var url = `${google_search_prefix}${encodeURIComponent(q)}`
-        var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/><br/>\n`
-        for (const n of numbers) {
-            var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
-            innerHTML += `<code>${n}: </code><a href="${url}">${url}</a><br/>\n`
+    var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
+    var url = `${google_search_prefix}${encodeURIComponent(q)}`
+    var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/><br/>\n`
+    for (const n of numbers) {
+        var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
+        innerHTML += `<code>${n}: </code><a href="${url}">${url}</a><br/>\n`
+    }
+    innerHTML += `<br/><code>\n${numbers.join(" ")}</code><br/>\n<br/>\n\n`;
+    innerHTML += `<code>${numbers.join("<br/>\n")}</code><br/>`;
+    output.innerHTML = innerHTML;
+
+    if (numbers.length == 1) {
+        var bad_format_message = "<b>Number format not supported!</b> Supported formats:<br/>\n";
+        for(pat of supported){
+            bad_format_message += `<u>${pat.name} ${pat.flag}</u><br/>`
+            for(let example of pat.search(pat.example_phone_number)){
+
+                bad_format_message += `${example}<br/>\n`;
+
+            }
+            bad_format_message += "<br/>"
         }
-        innerHTML += `<br/><code>\n${numbers.join(" ")}</code><br/>\n<br/>\n\n`;
-        innerHTML += `<code>${numbers.join("<br/>\n")}</code><br/>`;
-        output.innerHTML = innerHTML;
-    } else {
-        output.innerHTML = `Bad format! Example: ${pat.example_phone_number}`
+        bad_format_message += "<br/>";
+
+        output.innerHTML = `${bad_format_message}${output.innerHTML}`;
     }
 }
 
