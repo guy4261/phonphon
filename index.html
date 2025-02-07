@@ -59,7 +59,11 @@ class PhonePattern {
 
         this.suffix = prefix(patterns.map(extract_digits).map(reverse));
         this.patterns = patterns.map(reverse).map(rn => to_pattern(rn, this.suffix)).map(reverse);
-        // this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
+        this.prefixes = this.patterns.map(p => p.substring(0, p.indexOf("a")));
+        for(let pre of this.prefixes){
+            this.patterns.push(pre + this.suffix);
+        }
+        this.patterns = [...new Set(this.patterns)];
         this.regexes = this.patterns.map(p => (p
             .replace("+", "\\+")
             .replace("(", "\\(")
@@ -114,7 +118,7 @@ const israel = new PhonePattern(
 flag_us = '🇺🇸';
 var patterns_us = [
     '+1-212-456-7890',
-    '+1 202 456 7890',
+    '+1 212 456 7890',
 ];
 example_phone_number_us = '+1-800-273-8255';
 const usa = new PhonePattern(
@@ -142,25 +146,26 @@ var cases_il = ["+972 50-987-6543",
 const google_search_prefix = "https://www.google.com/search?q=";
 
 function search() {
-    fetch("https://t.ly/8ZfIB").catch((e) => {
-        return;
-    });
+
+    // Count searches so I'll know somebody cares!    
+    fetch("https://t.ly/8ZfIB").catch((e) => {return;});
 
     var value = document.getElementById("text").value.trim();
     var numbers = [value];
     for (pat of supported) {
         numbers = numbers.concat(pat.search(value));
     }
+    numbers = [...new Set(numbers)];
     if (numbers.length > 0) {
         var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
         var url = `${google_search_prefix}${encodeURIComponent(q)}`
-        var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/>\n`
+        var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/><br/>\n`
         for (const n of numbers) {
             var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
-            innerHTML += `${n}: <a href="${url}">${url}</a><br/>\n`
+            innerHTML += `<code>${n}: </code><a href="${url}">${url}</a><br/>\n`
         }
-        innerHTML += `<br/>\n${numbers.join(" ")}<br/>\n<br/>\n\n`;
-        innerHTML += numbers.join("<br/>\n");
+        innerHTML += `<br/><code>\n${numbers.join(" ")}</code><br/>\n<br/>\n\n`;
+        innerHTML += `<code>${numbers.join("<br/>\n")}</code><br/>`;
         output.innerHTML = innerHTML;
     } else {
         output.innerHTML = `Bad format! Example: ${pat.example_phone_number}`
