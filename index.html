@@ -165,8 +165,8 @@ function search() {
         numbers = numbers.concat(pat.search(value));
     }
     numbers = [...new Set(numbers)];
-    var q = numbers.map(n => `"${encodeURIComponent(n)}"`).join(" OR ");
-    var url = `${google_search_prefix}${encodeURIComponent(q)}`
+    var q = numbers.map(n => `${encodeURIComponent('"' + n + '"')}`).join("+OR+");
+    var url = `${google_search_prefix}${q}`
     var innerHTML = `<b>Search all terms:</b> <a href="${url}">${url}</a><br/><br/>\n`
     for (const n of numbers) {
         var url = `${google_search_prefix}${encodeURIComponent(`"${n}"`)}`
